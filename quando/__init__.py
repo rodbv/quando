@@ -35,6 +35,13 @@ class SimulationResult:
             p95=self.percentile(95),
         )
 
+    def __repr__(self) -> str:
+        s = self.sle()
+        return (
+            f"SimulationResult(p50={s.p50}, p85={s.p85}, p95={s.p95},"
+            f" n={len(self.distribution)})"
+        )
+
 
 class Quando:
     def __init__(
@@ -99,13 +106,14 @@ class Quando:
             p95=self.percentile(95),
         )
 
-    def monte_carlo(
+    def forecast_days(
         self,
         n_items: int,
         *,
         num_simulations: int = 10_000,
         seed: int | None = None,
     ) -> SimulationResult:
+        """Simulate how many days to deliver n_items, based on historical throughput."""
         if n_items < 1:
             raise ValueError("n_items must be >= 1")
         tp = self.throughput
@@ -118,4 +126,19 @@ class Quando:
                 done += int(rng.choice(tp))
                 days += 1
             results[i] = days
+        return SimulationResult(results)
+
+    def forecast_items(
+        self,
+        n_days: int,
+        *,
+        num_simulations: int = 10_000,
+        seed: int | None = None,
+    ) -> SimulationResult:
+        """Simulate how many items can be delivered within n_days."""
+        if n_days < 1:
+            raise ValueError("n_days must be >= 1")
+        tp = self.throughput
+        rng = np.random.default_rng(seed)
+        results = rng.choice(tp, size=(num_simulations, n_days), replace=True).sum(axis=1).astype(int)
         return SimulationResult(results)

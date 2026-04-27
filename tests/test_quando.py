@@ -114,65 +114,107 @@ def _items_with_throughput(daily_counts: list[int]) -> list[tuple[date, date]]:
 
 
 def test_throughput_shape():
-    # 3 items on day 0, 1 item on day 1, 2 items on day 2
     w = Quando(_items_with_throughput([3, 1, 2]))
-    tp = w.throughput
-    assert list(tp) == [3, 1, 2]
+    assert list(w.throughput) == [3, 1, 2]
 
 
 def test_throughput_includes_zero_days():
-    # items on day 0 and day 2 only — day 1 should be 0
     w = Quando(_items_with_throughput([2, 0, 3]))
     assert list(w.throughput) == [2, 0, 3]
 
 
-# --- monte_carlo ---
+# --- shared fixture ---
 
 def _steady_quando() -> Quando:
-    """Quando with consistent 2-items/day throughput for predictable MCS."""
+    """Quando with consistent 2-items/day throughput for predictable simulations."""
     return Quando(_items_with_throughput([2] * 20))
 
 
-def test_monte_carlo_returns_simulation_result():
-    result = _steady_quando().monte_carlo(n_items=4)
-    assert isinstance(result, SimulationResult)
+# --- forecast_days ---
+
+def test_forecast_days_returns_simulation_result():
+    assert isinstance(_steady_quando().forecast_days(n_items=4), SimulationResult)
 
 
-def test_monte_carlo_distribution_length():
-    result = _steady_quando().monte_carlo(n_items=4, num_simulations=500)
+def test_forecast_days_distribution_length():
+    result = _steady_quando().forecast_days(n_items=4, num_simulations=500)
     assert len(result.distribution) == 500
 
 
-def test_monte_carlo_distribution_type():
-    result = _steady_quando().monte_carlo(n_items=4)
-    assert isinstance(result.distribution, np.ndarray)
-
-
-def test_monte_carlo_values_are_positive():
-    result = _steady_quando().monte_carlo(n_items=4, num_simulations=200)
+def test_forecast_days_values_are_positive():
+    result = _steady_quando().forecast_days(n_items=4, num_simulations=200)
     assert (result.distribution >= 1).all()
 
 
-def test_monte_carlo_percentile_returns_int():
-    result = _steady_quando().monte_carlo(n_items=4, num_simulations=200)
-    assert isinstance(result.percentile(85), int)
-
-
-def test_monte_carlo_sle_is_named_tuple():
-    result = _steady_quando().monte_carlo(n_items=4, num_simulations=200)
-    sle = result.sle()
-    assert isinstance(sle, SLE)
-    p50, p85, p95 = sle
+def test_forecast_days_sle_ordering():
+    result = _steady_quando().forecast_days(n_items=4, num_simulations=200)
+    p50, p85, p95 = result.sle()
     assert p50 <= p85 <= p95
 
 
-def test_monte_carlo_seed_reproducible():
+def test_forecast_days_seed_reproducible():
     w = _steady_quando()
-    r1 = w.monte_carlo(n_items=4, num_simulations=200, seed=42)
-    r2 = w.monte_carlo(n_items=4, num_simulations=200, seed=42)
+    r1 = w.forecast_days(n_items=4, num_simulations=200, seed=42)
+    r2 = w.forecast_days(n_items=4, num_simulations=200, seed=42)
     assert np.array_equal(r1.distribution, r2.distribution)
 
 
-def test_monte_carlo_invalid_n_items():
+def test_forecast_days_invalid_n_items():
     with pytest.raises(ValueError):
-        _steady_quando().monte_carlo(n_items=0)
+        _steady_quando().forecast_days(n_items=0)
+
+
+# --- forecast_items ---
+
+def test_forecast_items_returns_simulation_result():
+    assert isinstance(_steady_quando().forecast_items(n_days=5), SimulationResult)
+
+
+def test_forecast_items_distribution_length():
+    result = _steady_quando().forecast_items(n_days=5, num_simulations=500)
+    assert len(result.distribution) == 500
+
+
+def test_forecast_items_values_are_non_negative():
+    result = _steady_quando().forecast_items(n_days=5, num_simulations=200)
+    assert (result.distribution >= 0).all()
+
+
+def test_forecast_items_sle_ordering():
+    result = _steady_quando().forecast_items(n_days=10, num_simulations=200)
+    p50, p85, p95 = result.sle()
+    assert p50 <= p85 <= p95
+
+
+def test_forecast_items_seed_reproducible():
+    w = _steady_quando()
+    r1 = w.forecast_items(n_days=5, num_simulations=200, seed=7)
+    r2 = w.forecast_items(n_days=5, num_simulations=200, seed=7)
+    assert np.array_equal(r1.distribution, r2.distribution)
+
+
+def test_forecast_items_invalid_n_days():
+    with pytest.raises(ValueError):
+        _steady_quando().forecast_items(n_days=0)
+
+
+# --- SimulationResult ---
+
+def test_simulation_result_repr():
+    result = _steady_quando().forecast_days(n_items=4, num_simulations=200, seed=1)
+    r = repr(result)
+    assert r.startswith("SimulationResult(")
+    assert "p50=" in r
+    assert "p85=" in r
+    assert "p95=" in r
+    assert "n=200" in r
+
+
+def test_simulation_result_percentile_returns_int():
+    result = _steady_quando().forecast_days(n_items=4, num_simulations=200)
+    assert isinstance(result.percentile(85), int)
+
+
+def test_simulation_result_distribution_is_ndarray():
+    result = _steady_quando().forecast_items(n_days=5)
+    assert isinstance(result.distribution, np.ndarray)
