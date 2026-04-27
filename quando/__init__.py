@@ -46,21 +46,39 @@ class SimulationResult:
 class Quando:
     def __init__(
         self,
-        items: Sequence[tuple[date | datetime, date | datetime]],
+        items: Sequence[tuple[date | datetime | str, date | datetime | str]],
     ) -> None:
         if not items:
             raise ValueError("items is empty")
         lead_times: list[int] = []
         end_dates: list[date] = []
         for start, end in items:
-            s = start.date() if isinstance(start, datetime) else start
-            e = end.date() if isinstance(end, datetime) else end
+            # Accept string, date, or datetime
+            s = self._parse_date(start)
+            e = self._parse_date(end)
             if e < s:
                 raise ValueError(f"end {e} is before start {s}")
             lead_times.append((e - s).days + 1)
             end_dates.append(e)
         self.lead_times = lead_times
         self._end_dates = end_dates
+
+    @staticmethod
+    def _parse_date(val: date | datetime | str) -> date:
+        if isinstance(val, date) and not isinstance(val, datetime):
+            return val
+        if isinstance(val, datetime):
+            return val.date()
+        if isinstance(val, str):
+            # Try parsing as date or datetime string
+            try:
+                return datetime.fromisoformat(val).date()
+            except ValueError:
+                try:
+                    return datetime.strptime(val, "%Y-%m-%d").date()
+                except ValueError:
+                    raise ValueError(f"Could not parse date string: {val}")
+        raise TypeError(f"Unsupported type for date: {type(val)}")
 
     @classmethod
     def from_csv(
