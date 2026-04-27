@@ -1,5 +1,8 @@
 # quando
 
+See the `justfile` for common development commands (setup, testing, linting, etc.) using uv. Install just with `uv pip install just` if needed.
+# quando
+
 [![CI](https://github.com/rodbv/quando/actions/workflows/ci.yml/badge.svg)](https://github.com/rodbv/quando/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/quando-forecast.svg)](https://pypi.org/project/quando-forecast/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
