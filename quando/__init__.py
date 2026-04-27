@@ -9,13 +9,31 @@ import numpy as np
 import pandas as pd
 
 __version__ = "0.1.0"
-__all__ = ["Quando", "SLE"]
+__all__ = ["Quando", "SLE", "SimulationResult"]
 
 
 class SLE(NamedTuple):
     p50: int
     p85: int
     p95: int
+
+
+class SimulationResult:
+    """Result of a Monte Carlo simulation. Holds the raw distribution and
+    exposes percentile queries consistent with Quando.percentile()."""
+
+    def __init__(self, distribution: np.ndarray) -> None:
+        self.distribution = distribution
+
+    def percentile(self, p: float) -> int:
+        return int(math.ceil(float(np.percentile(self.distribution, p))))
+
+    def sle(self) -> SLE:
+        return SLE(
+            p50=self.percentile(50),
+            p85=self.percentile(85),
+            p95=self.percentile(95),
+        )
 
 
 class Quando:
@@ -26,13 +44,16 @@ class Quando:
         if not items:
             raise ValueError("items is empty")
         lead_times: list[int] = []
+        end_dates: list[date] = []
         for start, end in items:
             s = start.date() if isinstance(start, datetime) else start
             e = end.date() if isinstance(end, datetime) else end
             if e < s:
                 raise ValueError(f"end {e} is before start {s}")
             lead_times.append((e - s).days + 1)
+            end_dates.append(e)
         self.lead_times = lead_times
+        self._end_dates = end_dates
 
     @classmethod
     def from_csv(
@@ -56,6 +77,18 @@ class Quando:
         items = list(zip(df[started_col].dt.date, df[finished_col].dt.date))
         return cls(items)
 
+    @property
+    def throughput(self) -> np.ndarray:
+        """Items finished per calendar day, including zero-throughput days."""
+        finished = pd.Series(pd.to_datetime(self._end_dates))
+        days = pd.date_range(finished.min(), finished.max(), freq="D")
+        return (
+            finished.value_counts()
+            .sort_index()
+            .reindex(days, fill_value=0)
+            .to_numpy(dtype=int)
+        )
+
     def percentile(self, p: float) -> int:
         return int(math.ceil(float(np.percentile(self.lead_times, p))))
 
@@ -65,3 +98,24 @@ class Quando:
             p85=self.percentile(85),
             p95=self.percentile(95),
         )
+
+    def monte_carlo(
+        self,
+        n_items: int,
+        *,
+        num_simulations: int = 10_000,
+        seed: int | None = None,
+    ) -> SimulationResult:
+        if n_items < 1:
+            raise ValueError("n_items must be >= 1")
+        tp = self.throughput
+        rng = np.random.default_rng(seed)
+        results = np.empty(num_simulations, dtype=int)
+        for i in range(num_simulations):
+            done = 0
+            days = 0
+            while done < n_items:
+                done += int(rng.choice(tp))
+                days += 1
+            results[i] = days
+        return SimulationResult(results)

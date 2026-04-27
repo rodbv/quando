@@ -1,8 +1,9 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
+import numpy as np
 import pytest
 
-from quando import Quando, SLE
+from quando import Quando, SLE, SimulationResult
 
 
 def test_same_day_is_one():
@@ -97,3 +98,81 @@ def test_empty_raises():
 def test_end_before_start_raises():
     with pytest.raises(ValueError):
         Quando([(date(2024, 1, 5), date(2024, 1, 1))])
+
+
+# --- throughput ---
+
+def _items_with_throughput(daily_counts: list[int]) -> list[tuple[date, date]]:
+    """Build items finishing on consecutive days with the given daily counts."""
+    items = []
+    base = date(2024, 1, 1)
+    for offset, count in enumerate(daily_counts):
+        d = base + timedelta(days=offset)
+        for _ in range(count):
+            items.append((d, d))
+    return items
+
+
+def test_throughput_shape():
+    # 3 items on day 0, 1 item on day 1, 2 items on day 2
+    w = Quando(_items_with_throughput([3, 1, 2]))
+    tp = w.throughput
+    assert list(tp) == [3, 1, 2]
+
+
+def test_throughput_includes_zero_days():
+    # items on day 0 and day 2 only — day 1 should be 0
+    w = Quando(_items_with_throughput([2, 0, 3]))
+    assert list(w.throughput) == [2, 0, 3]
+
+
+# --- monte_carlo ---
+
+def _steady_quando() -> Quando:
+    """Quando with consistent 2-items/day throughput for predictable MCS."""
+    return Quando(_items_with_throughput([2] * 20))
+
+
+def test_monte_carlo_returns_simulation_result():
+    result = _steady_quando().monte_carlo(n_items=4)
+    assert isinstance(result, SimulationResult)
+
+
+def test_monte_carlo_distribution_length():
+    result = _steady_quando().monte_carlo(n_items=4, num_simulations=500)
+    assert len(result.distribution) == 500
+
+
+def test_monte_carlo_distribution_type():
+    result = _steady_quando().monte_carlo(n_items=4)
+    assert isinstance(result.distribution, np.ndarray)
+
+
+def test_monte_carlo_values_are_positive():
+    result = _steady_quando().monte_carlo(n_items=4, num_simulations=200)
+    assert (result.distribution >= 1).all()
+
+
+def test_monte_carlo_percentile_returns_int():
+    result = _steady_quando().monte_carlo(n_items=4, num_simulations=200)
+    assert isinstance(result.percentile(85), int)
+
+
+def test_monte_carlo_sle_is_named_tuple():
+    result = _steady_quando().monte_carlo(n_items=4, num_simulations=200)
+    sle = result.sle()
+    assert isinstance(sle, SLE)
+    p50, p85, p95 = sle
+    assert p50 <= p85 <= p95
+
+
+def test_monte_carlo_seed_reproducible():
+    w = _steady_quando()
+    r1 = w.monte_carlo(n_items=4, num_simulations=200, seed=42)
+    r2 = w.monte_carlo(n_items=4, num_simulations=200, seed=42)
+    assert np.array_equal(r1.distribution, r2.distribution)
+
+
+def test_monte_carlo_invalid_n_items():
+    with pytest.raises(ValueError):
+        _steady_quando().monte_carlo(n_items=0)
