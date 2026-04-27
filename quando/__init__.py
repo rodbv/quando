@@ -8,6 +8,9 @@ from typing import NamedTuple, Sequence
 import numpy as np
 import pandas as pd
 
+__version__ = "0.1.0"
+__all__ = ["Quando", "SLE"]
+
 
 class SLE(NamedTuple):
     p50: int
