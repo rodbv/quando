@@ -15,7 +15,7 @@ Kanban flow metrics for Python. Answers the eternal question: **"quando vai fica
 ## Installation
 
 ```bash
-pip install quando
+pip install quando-forecast
 ```
 
 ## Quick start

@@ -3,7 +3,7 @@ name: Publish to PyPI
 # Triggers when you create a GitHub Release.
 # Before this works, you must configure Trusted Publishing on PyPI:
 #   1. Go to https://pypi.org/manage/account/publishing/
-#   2. Add a new publisher: owner=rodbv, repo=quando, workflow=publish.yml, env=pypi
+#   2. Add a new publisher: project=quando-forecast, owner=rodbv, repo=quando, workflow=publish.yml, env=pypi
 
 on:
   release:

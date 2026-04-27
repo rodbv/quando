@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "quando"
+name = "quando-forecast"
 version = "0.1.0"
 description = "Flow metrics library for kanban forecasting"
 readme = "README.md"
@@ -21,6 +21,9 @@ dependencies = [
     "numpy>=2.4.4",
     "pandas>=3.0.2",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["quando"]
 
 [dependency-groups]
 dev = [
