@@ -1,6 +1,3 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
 build/
 dist/
 wheels/
@@ -8,3 +5,53 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+sdist/
+var/
+wheels/
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+.tox/
+.nox/
+.cache/
+*.log
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Editors
+.vscode/
+.idea/
+.spyderproject
+.ropeproject
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini

@@ -17,11 +17,13 @@ def test_multi_day():
 
 
 def test_multiple_items():
-    w = Quando([
-        (date(2024, 1, 1), date(2024, 1, 3)),
-        (date(2024, 1, 5), date(2024, 1, 5)),
-        (date(2024, 1, 7), date(2024, 1, 10)),
-    ])
+    w = Quando(
+        [
+            (date(2024, 1, 1), date(2024, 1, 3)),
+            (date(2024, 1, 5), date(2024, 1, 5)),
+            (date(2024, 1, 7), date(2024, 1, 10)),
+        ]
+    )
     assert w.lead_times == [3, 1, 4]
 
 
@@ -34,15 +36,15 @@ def test_percentile_known_values():
     # lead times 1..10
     items = [(date(2024, 1, 1), date(2024, 1, i)) for i in range(1, 11)]
     w = Quando(items)
-    assert w.percentile(50) == 6   # ceil(5.5) = 6
-    assert w.percentile(85) == 9   # ceil(8.65) = 9
+    assert w.percentile(50) == 6  # ceil(5.5) = 6
+    assert w.percentile(85) == 9  # ceil(8.65) = 9
     assert w.percentile(95) == 10  # ceil(9.55) = 10
 
 
 def test_percentile_custom():
     items = [(date(2024, 1, 1), date(2024, 1, i)) for i in range(1, 11)]
     w = Quando(items)
-    assert w.percentile(70) == 8   # ceil(7.3) = 8
+    assert w.percentile(70) == 8  # ceil(7.3) = 8
 
 
 def test_sle_is_named_tuple():
@@ -71,7 +73,9 @@ def test_sle_named_access():
 
 def test_from_csv(tmp_path):
     csv = tmp_path / "data.csv"
-    csv.write_text("started_at,finished_at\n2024-01-01,2024-01-05\n2024-01-03,2024-01-03\n")
+    csv.write_text(
+        "started_at,finished_at\n2024-01-01,2024-01-05\n2024-01-03,2024-01-03\n"
+    )
     w = Quando.from_csv(csv)
     assert w.lead_times == [5, 1]
 
@@ -102,6 +106,7 @@ def test_end_before_start_raises():
 
 # --- throughput ---
 
+
 def _items_with_throughput(daily_counts: list[int]) -> list[tuple[date, date]]:
     """Build items finishing on consecutive days with the given daily counts."""
     items = []
@@ -125,12 +130,14 @@ def test_throughput_includes_zero_days():
 
 # --- shared fixture ---
 
+
 def _steady_quando() -> Quando:
     """Quando with consistent 2-items/day throughput for predictable simulations."""
     return Quando(_items_with_throughput([2] * 20))
 
 
 # --- forecast_days ---
+
 
 def test_forecast_days_returns_simulation_result():
     assert isinstance(_steady_quando().forecast_days(n_items=4), SimulationResult)
@@ -166,6 +173,7 @@ def test_forecast_days_invalid_n_items():
 
 # --- forecast_items ---
 
+
 def test_forecast_items_returns_simulation_result():
     assert isinstance(_steady_quando().forecast_items(n_days=5), SimulationResult)
 
@@ -199,6 +207,7 @@ def test_forecast_items_invalid_n_days():
 
 
 # --- SimulationResult ---
+
 
 def test_simulation_result_repr():
     result = _steady_quando().forecast_days(n_items=4, num_simulations=200, seed=1)

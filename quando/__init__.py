@@ -76,8 +76,12 @@ class Quando:
             names=[started_col, finished_col],
             usecols=[0, 1],
         )
-        df[started_col] = pd.to_datetime(df[started_col], errors="coerce", format="mixed")
-        df[finished_col] = pd.to_datetime(df[finished_col], errors="coerce", format="mixed")
+        df[started_col] = pd.to_datetime(
+            df[started_col], errors="coerce", format="mixed"
+        )
+        df[finished_col] = pd.to_datetime(
+            df[finished_col], errors="coerce", format="mixed"
+        )
         df = df.dropna(subset=[started_col, finished_col])
         df[started_col] = df[started_col].dt.normalize()
         df[finished_col] = df[finished_col].dt.normalize()
@@ -140,5 +144,9 @@ class Quando:
             raise ValueError("n_days must be >= 1")
         tp = self.throughput
         rng = np.random.default_rng(seed)
-        results = rng.choice(tp, size=(num_simulations, n_days), replace=True).sum(axis=1).astype(int)
+        results = (
+            rng.choice(tp, size=(num_simulations, n_days), replace=True)
+            .sum(axis=1)
+            .astype(int)
+        )
         return SimulationResult(results)
