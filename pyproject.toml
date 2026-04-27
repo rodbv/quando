@@ -1,5 +1,5 @@
 [bumpver]
-current_version = "0.1.5"
+current_version = "0.2.0"
 version_pattern = "MAJOR.MINOR.PATCH"
 [build-system]
 requires = ["hatchling"]
@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "quando-forecast"
-version = "0.1.0"
+version = "0.2.0"
 description = "Flow metrics library for kanban forecasting"
 readme = "README.md"
 requires-python = ">=3.11"
