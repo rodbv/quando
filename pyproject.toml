@@ -1,3 +1,6 @@
+[bumpver]
+current_version = "0.1.5"
+version_pattern = "MAJOR.MINOR.PATCH"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -17,15 +20,10 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Office/Business :: Scheduling",
 ]
-dependencies = [
-    "numpy>=2.4.4",
-    "pandas>=3.0.2",
-]
+dependencies = ["numpy>=2.4.4", "pandas>=3.0.2"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["quando"]
 
 [dependency-groups]
-dev = [
-    "pytest>=9.0.3",
-]
+dev = ["pytest>=9.0.3"]
