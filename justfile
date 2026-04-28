@@ -28,8 +28,13 @@ format:
 bump VERSION:
 	uv run bumpver update --set-version {{VERSION}}
 
-# Release to PyPI (usage: just release VERSION=0.1.1)
+
+
+# Release to PyPI via GitHub Actions (usage: just release VERSION=0.2.1)
 release VERSION:
-	just bump {{VERSION}}
-	uv run python -m build
-	uv run twine upload dist/*
+	uv run bumpver update --set-version {{VERSION}}
+	git add pyproject.toml
+	git commit -m "Release v{{VERSION}}"
+	git tag v{{VERSION}}
+	git push
+	git push origin v{{VERSION}}
